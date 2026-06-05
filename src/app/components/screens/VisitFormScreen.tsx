@@ -10,7 +10,6 @@ interface CrewHarvest {
   pesoProm: string;
   totalPepas: string;
   pesoPepa: string;
-  cicloCosecha: string;
 }
 
 interface CrewFruit {
@@ -53,11 +52,9 @@ function calcHarvestTotals(crews: CrewHarvest[], muestreoPalmas: string) {
   const avgPesoProm = avg(c => parseFloat(c.pesoProm) || 0);
   const avgTotalPepas = avg(c => parseFloat(c.totalPepas) || 0);
   const avgPesoPepa = avg(c => parseFloat(c.pesoPepa) || 0);
-  const avgCiclo = avg(c => parseFloat(c.cicloCosecha) || 0);
 
   const palmas = parseFloat(muestreoPalmas) || 1;
   const totalPepas = avgTotalPepas;
-  console.log(totalPepas);
   const pesoPepa = avgPesoPepa;
   const pesoProm = avgPesoProm;
 
@@ -74,7 +71,6 @@ function calcHarvestTotals(crews: CrewHarvest[], muestreoPalmas: string) {
     avgPesoProm: avgPesoProm.toFixed(1),
     avgTotalPepas: avgTotalPepas.toFixed(1),
     avgPesoPepa: avgPesoPepa.toFixed(1),
-    avgCiclo: avgCiclo.toFixed(1),
     pepasPorPalma, pesoPepasTotal, perdidaAceite, perdidaAlmendra, perdidaExtracAceite, perdidaExtracAlmendra,
   };
 }
@@ -155,7 +151,7 @@ export function VisitFormScreen() {
     return `${parseInt(d)} de ${MONTHS[parseInt(m) - 1]}, ${y}`;
   })();
 
-  const [tab, setTab] = useState<'encabezado' | 'cosecha' | 'fruta' | 'obs'>('encabezado');
+  const [tab, setTab] = useState<'encabezado' | 'cosecha' | 'fruta' | 'info'>('encabezado');
   const [saved, setSaved] = useState(false);
 
   // Encabezado state
@@ -165,10 +161,11 @@ export function VisitFormScreen() {
   const [acompanante, setAcompanante] = useState('');
   const [cargoAcomp, setCargoAcomp] = useState('');
   const [muestreoPalmas, setMuestreoPalmas] = useState('25');
+  const [cicloCosecha, setCicloCosecha] = useState('15');
 
   // Section 1 - Harvest crews
   const [harvestCrews, setHarvestCrews] = useState<CrewHarvest[]>([
-    { id: 1, pesoProm: '22', totalPepas: '38', pesoPepa: '4.2', cicloCosecha: '15' }
+    { id: 1, pesoProm: '22', totalPepas: '38', pesoPepa: '4.2' }
   ]);
   const [expandedHarvest, setExpandedHarvest] = useState<number[]>([1]);
 
@@ -179,7 +176,7 @@ export function VisitFormScreen() {
   const [expandedFruit, setExpandedFruit] = useState<number[]>([1]);
 
   // Totals
-  const anyCrewComplete = harvestCrews.some(c => c.pesoProm && c.totalPepas && c.pesoPepa && c.cicloCosecha);
+  const anyCrewComplete = harvestCrews.some(c => c.pesoProm && c.totalPepas && c.pesoPepa);
   const harvestTotals = anyCrewComplete ? calcHarvestTotals(harvestCrews, muestreoPalmas) : null;
   const harvPerdidaExtrac = harvestTotals?.perdidaExtracAceite || '-';
   const anyFruitComplete = fruitCrews.some(c => c.muestreo);
@@ -193,7 +190,7 @@ export function VisitFormScreen() {
 
   const addHarvestCrew = () => {
     const id = Math.max(...harvestCrews.map(c => c.id), 0) + 1;
-    setHarvestCrews(prev => [...prev, { id, pesoProm: '', totalPepas: '', pesoPepa: '', cicloCosecha: '' }]);
+    setHarvestCrews(prev => [...prev, { id, pesoProm: '', totalPepas: '', pesoPepa: '' }]);
     setExpandedHarvest(prev => [...prev, id]);
   };
 
@@ -243,7 +240,7 @@ export function VisitFormScreen() {
     { id: 'encabezado', label: 'Encabezado' },
     { id: 'cosecha', label: 'Sec. 1' },
     { id: 'fruta', label: 'Sec. 2' },
-    { id: 'obs', label: 'Obs.' },
+    { id: 'info', label: 'Info Adicional' },
   ] as const;
 
   return (
@@ -320,12 +317,8 @@ export function VisitFormScreen() {
                 <input type="text" value={acompanante} onChange={e => setAcompanante(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle} placeholder="Nombre del acompañante" />
               </FormField>
 
-              <FormField label="Cargo del acompañante">
+              <FormField label="Cargo del acompañante" last>
                 <input type="text" value={cargoAcomp} onChange={e => setCargoAcomp(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle} placeholder="Cargo" />
-              </FormField>
-
-              <FormField label="Muestreo de palmas" last>
-                <input type="number" value={muestreoPalmas} onChange={e => setMuestreoPalmas(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle} placeholder="Ej: 25" />
               </FormField>
             </div>
           </div>
@@ -337,6 +330,13 @@ export function VisitFormScreen() {
             <p className="text-xs text-muted-foreground mb-2">
               Evaluación de calidad de cosecha. Ingrese datos por cuadrilla.
             </p>
+
+            {/* Muestreo de palmas - single input */}
+            <div className="bg-card rounded-xl p-4 shadow-sm">
+              <FormField label="Muestreo de palmas">
+                <input type="number" value={muestreoPalmas} onChange={e => setMuestreoPalmas(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle} placeholder="Ej: 25" />
+              </FormField>
+            </div>
 
             {harvestCrews.map((crew, idx) => {
               const isOpen = expandedHarvest.includes(crew.id);
@@ -371,7 +371,6 @@ export function VisitFormScreen() {
                         <MiniField label="Peso prom. racimo (kg)" value={crew.pesoProm} onChange={v => updateHarvestCrew(crew.id, 'pesoProm', v)} />
                         <MiniField label="Total pepas sin recog." value={crew.totalPepas} onChange={v => updateHarvestCrew(crew.id, 'totalPepas', v)} />
                         <MiniField label="Peso prom. pepa (g)" value={crew.pesoPepa} onChange={v => updateHarvestCrew(crew.id, 'pesoPepa', v)} />
-                        <MiniField label="Ciclo cosecha (días)" value={crew.cicloCosecha} onChange={v => updateHarvestCrew(crew.id, 'cicloCosecha', v)} />
                       </div>
 
                       {/* Calculated */}
@@ -379,8 +378,8 @@ export function VisitFormScreen() {
                       <div className="grid grid-cols-2 gap-2">
                         <CalcField label="Pepas sin recog. /palma" value={calc.pepasPorPalma} />
                         <CalcField label="Peso pepas sin recog. (g)" value={calc.pesoPepasTotal !== '0' ? calc.pesoPepasTotal : '-'} />
-                        <CalcField label="Pérd. aceite pepa sin recog. (g)" value={parseFloat(calc.perdidaAceite) > 0 ? calc.perdidaAceite : '-'} />
-                        <CalcField label="Pérd. almendra pepa sin recog. (g)" value={parseFloat(calc.perdidaAlmendra) > 0 ? calc.perdidaAlmendra : '-'} />
+                        <CalcField label="Pérd. aceite (g)" value={parseFloat(calc.perdidaAceite) > 0 ? calc.perdidaAceite : '-'} />
+                        <CalcField label="Pérd. almendra (g)" value={parseFloat(calc.perdidaAlmendra) > 0 ? calc.perdidaAlmendra : '-'} />
                         <CalcField label="Pérd. extrac. aceite (%)" value={calc.perdidaExtracAceite !== '-' ? `${calc.perdidaExtracAceite}%` : '-'} />
                         <CalcField label="Pérd. extrac. almendra (%)" value={calc.perdidaExtracAlmendra !== '-' ? `${calc.perdidaExtracAlmendra}%` : '-'} />
                       </div>
@@ -399,43 +398,39 @@ export function VisitFormScreen() {
             </button>
 
             {/* Totals */}
-            {(() => {
-              const t = calcHarvestTotals(harvestCrews, muestreoPalmas);
-              if (!t) return null;
-              return (
-                <div className="bg-ring/10 rounded-xl p-3.5">
-                  <p className="text-xs font-bold text-primary mb-2">TOTALES DE SECCIÓN</p>
-                  <div className="space-y-2">
-                    <p className="text-[10px] font-bold text-ring uppercase tracking-wide">Promedios datos manuales</p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                      <span className="text-xs text-muted-foreground">Peso prom. racimo (kg)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.avgPesoProm}</span>
-                      <span className="text-xs text-muted-foreground">Total pepas sin recoger</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.avgTotalPepas}</span>
-                      <span className="text-xs text-muted-foreground">Peso prom. pepa (g)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.avgPesoPepa}</span>
-                      <span className="text-xs text-muted-foreground">Ciclo cosecha (días)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.avgCiclo}</span>
-                    </div>
-                    <p className="text-[10px] font-bold text-success uppercase tracking-wide pt-1">Calculados promediados</p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1">
-                      <span className="text-xs text-muted-foreground">Pepas sin recoger/palma</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.pepasPorPalma}</span>
-                      <span className="text-xs text-muted-foreground">Peso pepas (g)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.pesoPepasTotal}</span>
-                      <span className="text-xs text-muted-foreground">Pérd. aceite pepa (g)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.perdidaAceite}</span>
-                      <span className="text-xs text-muted-foreground">Pérd. almendra (g)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.perdidaAlmendra}</span>
-                      <span className="text-xs text-muted-foreground">Pérd. extrac. aceite (%)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.perdidaExtracAceite}</span>
-                      <span className="text-xs text-muted-foreground">Pérd. extrac. almendra (%)</span>
-                      <span className="text-xs font-bold text-foreground text-right">{t.perdidaExtracAlmendra}</span>
-                    </div>
+            {harvestTotals && (
+              <div className="bg-ring/10 rounded-xl p-3.5">
+                <p className="text-xs font-bold text-primary mb-2">TOTALES DE SECCIÓN</p>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-bold text-ring uppercase tracking-wide">Promedios datos manuales</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <span className="text-xs text-muted-foreground">Peso prom. racimo (kg)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.avgPesoProm}</span>
+                    <span className="text-xs text-muted-foreground">Total pepas sin recoger</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.avgTotalPepas}</span>
+                    <span className="text-xs text-muted-foreground">Peso prom. pepa (g)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.avgPesoPepa}</span>
+                    <span className="text-xs text-muted-foreground">Ciclo cosecha (días)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{cicloCosecha}</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-success uppercase tracking-wide pt-1">Calculados promediados</p>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                    <span className="text-xs text-muted-foreground">Pepas sin recoger/palma</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.pepasPorPalma}</span>
+                    <span className="text-xs text-muted-foreground">Peso pepas (g)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.pesoPepasTotal}</span>
+                    <span className="text-xs text-muted-foreground">Pérd. aceite pepa (g)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.perdidaAceite}</span>
+                    <span className="text-xs text-muted-foreground">Pérd. almendra (g)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.perdidaAlmendra}</span>
+                    <span className="text-xs text-muted-foreground">Pérd. extrac. aceite (%)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.perdidaExtracAceite}</span>
+                    <span className="text-xs text-muted-foreground">Pérd. extrac. almendra (%)</span>
+                    <span className="text-xs font-bold text-foreground text-right">{harvestTotals.perdidaExtracAlmendra}</span>
                   </div>
                 </div>
-              );
-            })()}
+              </div>
+            )}
           </div>
         )}
 
@@ -478,7 +473,7 @@ export function VisitFormScreen() {
                         {[
                           ['Sobremaduros', 'sobremaduros'], ['Podridos', 'podridos'],
                           ['Verdes', 'verdes'], ['Pedúnculo largo', 'pedLargo'],
-                          ['Pudrición de Cogollos', 'pc'], ['Verde soltando pepa', 'verdeSoltando'],
+                          ['Pudrición de Cogollos (PC)', 'pc'], ['Verde soltando pepa', 'verdeSoltando'],
                           ['DEMOTISPA', 'demotispa'], ['Fruta enferma', 'enferma'],
                         ].map(([label, field]) => (
                           <MiniField key={field} label={label} value={(crew as any)[field]} onChange={v => updateFruitCrew(crew.id, field as keyof CrewFruit, v)} />
@@ -531,12 +526,12 @@ export function VisitFormScreen() {
 
                 <div>
                   <p className="text-[10px] font-bold text-warning uppercase tracking-wide mb-1">Pérdidas por calidad cosecha</p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                  <div className="grid grid-cols-[3fr_1fr] gap-x-3 gap-y-1">
                     <span className="text-xs text-muted-foreground">Fruto verde (% × 0.08)</span>
                     <span className="text-xs font-bold text-foreground text-right">{fruitTotals.perdCalVerde}</span>
                     <span className="text-xs text-muted-foreground">Pedúnculo largo (% × 0.003)</span>
                     <span className="text-xs font-bold text-foreground text-right">{fruitTotals.perdCalPedLargo}</span>
-                    <span className="text-xs text-muted-foreground">Pérd. extrac. aceite (Sec. 1)</span>
+                    <span className="text-xs text-muted-foreground">Pérd. extrac. aceite</span>
                     <span className="text-xs font-bold text-foreground text-right">{harvPerdidaExtrac}</span>
                     <span className="text-xs font-bold text-ring border-t border-border pt-0.5">Total calidad cosecha</span>
                     <span className="text-xs font-bold text-ring text-right border-t border-border pt-0.5">{fruitTotals.perdCalTotal}</span>
@@ -545,7 +540,7 @@ export function VisitFormScreen() {
 
                 <div>
                   <p className="text-[10px] font-bold text-destructive uppercase tracking-wide mb-1">Pérdidas por problemas agronómicos</p>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1">
+                  <div className="grid grid-cols-[3fr_1fr] gap-x-3 gap-y-1">
                     <span className="text-xs text-muted-foreground">PC (% × 0.05)</span>
                     <span className="text-xs font-bold text-foreground text-right">{fruitTotals.perdAgrPc}</span>
                     <span className="text-xs text-muted-foreground">Verde soltando pepa (% × 0.08)</span>
@@ -568,11 +563,19 @@ export function VisitFormScreen() {
               </div>
             )}
 
-            {/* End section fields */}
+          </div>
+        )}
+
+        {/* INFO ADICIONAL TAB */}
+        {tab === 'info' && (
+          <div className="space-y-3">
             <div className="bg-card rounded-xl p-4 shadow-sm">
               <p className="text-xs font-bold text-ring uppercase tracking-wide mb-3">
-                Información adicional
+                Datos de cosecha
               </p>
+              <FormField label="Ciclo cosecha (días)">
+                <input type="number" value={cicloCosecha} onChange={e => setCicloCosecha(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle} placeholder="Ej: 15" />
+              </FormField>
               <FormField label="Calificación basura CC">
                 <select value={calBasura} onChange={e => setCalBasura(e.target.value)} className="w-full bg-input-background text-foreground border-border text-xs rounded-lg px-2.5 py-2 outline-none" style={inputStyle}>
                   <option>Bajo</option>
@@ -587,12 +590,6 @@ export function VisitFormScreen() {
                 </select>
               </FormField>
             </div>
-          </div>
-        )}
-
-        {/* OBSERVACIONES TAB */}
-        {tab === 'obs' && (
-          <div className="space-y-3">
             <div className="bg-card rounded-xl p-4 shadow-sm">
               <FormField label="Observaciones">
                 <textarea
@@ -648,7 +645,7 @@ export function VisitFormScreen() {
         <button
           onClick={handleSave}
           disabled={saved}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-none text-[15px] font-bold text-white cursor-pointer disabled:cursor-default"
+          className="w-50 mx-auto flex items-center justify-center gap-2 py-3.5 rounded-xl border-none text-[15px] font-bold text-white cursor-pointer disabled:cursor-default"
           style={{
             background: saved ? 'var(--color-success)' : 'var(--color-primary)',
             boxShadow: saved ? 'none' : '0 4px 15px rgba(46,117,182,0.35)',
